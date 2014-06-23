@@ -1,0 +1,138 @@
+This talk is about running perl scripts as daemons under Linux, or other unixes.
+
+I have found a better way to do it, and this talk is a ublic service announcement that
+THERE IS A BETTER WAY.  I did not invent this, I am merely the messenger bringing it to
+the masses.
+
+For anyone who isn't fully familiar with the problem, a quick recap:
+
+  You want to run a perl script as a background service.
+   - If the service dies, you want to restart it.
+   - If the service stops working, you want to kill and restart it.
+   - You want to take all the status/error messages from the program and log them.  Maybe to syslog.
+  
+  You do a little research, and find out that the standard way to do it is
+   * Close STDIN, STDOUT, STDERR
+   * Write all logging to a file, or syslog.
+   * Fork and Call setsid() to become a session leader
+   * Write a PID file somewhere like /run/  This is a file with the name of your service containing
+     the process ID of your service.
+
+  But wait, if you are a session leader and something causes you to open a tty device, you
+  get a controlling terminal again!
+   * Solution: use O_NOCTTY on all calls to open(), or fork again and call setpgid
+
+  Oh, and where should the PID file be written?  Hm, add an option to choose where to write it
+  ((add option in example code)
+  
+  Oh, and make sure you have permission to write it there!  Don't want your daemon to run as root?
+  well then make a directory for it.
+  ((example of creating directory and changing permissions))
+  
+  But wait, what if we want to write to a custom syslog target?  Add a new option...
+  ((add option to example for syslog target))
+  
+  Oh, and don't forget to go configure your syslog daemon to put these messages somewhere useful.
+
+  But wait, what if we want to debug this program?  It detaches itself now.  Thats inconvenient.
+  So, add a command line option to not detach for debugging purposes.
+
+  Ok, back to our goals:
+  
+  If it dies, we want to restart it.
+  
+  Um, maybe use a cron job to check (once per minute?) whether the PID listed in the PID file
+  still exists.  Something like "kill -0 `cat /run/myservice.pid`".
+
+  But PIDs get recycled, so also need to make sure cmdline matches.
+  
+  But what if you have a few dozen of this service running?  Do you really know whether the service
+  listed in that PID is really the one you think it is?  Well... not really.
+  
+  Same problem if you want to kill the service.  Are you really killing the right process?
+  Race condition!  No way to know for sure.
+  
+  Ok, Logging.  You wrote your script using syslog
+  ((example showing syslog))
+  You trapped signals.  You trapped die.  And warn!  You even did insane hacky cleverness to make a
+  PerlIO layer that redirects STDOUT to syslog.
+  But oh no, you called an XS method that died in a C library and it printed important diagnostics
+  on STDERR which bypasses all your perl cleverness, and you never see it because it went to /dev/null
+  Or, your program receives a SIGKILL and terminates and you'll never know because you can't
+  trap SIGKILL.  What now?  Your logging is incomplete!
+  
+So how do we fix this?
+
+  The real problem is that everything you did to "daemonize" your script is breaking the Unix
+  design.  No wonder it was so awkward!  Every process should have a parent.  PIDs should only
+  be used to talk about child processes or process groups.  STDERR exists to allow you to write
+  diagnostics.  So use them as they were designed!
+
+  Suppose you have a parent process that runs your daemon.
+  ((graphic))
+  Suppose the parent also runs a logger and connects it to your daemon on stdout/stderr.
+  ((graphic))
+  And suppose that external programs can ask the parent process to send signals to your daemon.
+  ((graphic))
+  
+  * Your daemon no longer needs to fork or setsid or worry about NOCTTY
+  * Your daemon no longer needs to write a PID file, because the parent knows the PID.
+  * Your daemon no longer needs to use syslog, or provide options to configure it.
+    because if your daemon prints ANY diagnostic under any circumstance, the logger gets it,
+    so no clever error handling is required.
+	How simple is that?  You print stuff and it gets logged.
+  * If your program exits on a fatal signal, the parent sees the exit status, even if it
+    wasn't trappable.
+  * You no longer have the PID race condition, because if you ask the parent to send a signal
+    the parent has either NOT reaped the child, and the PID is still valid, or has
+	reaped the child and knows not to send a signal.
+  * You no longer need to periodically check whether the child is alive because the parent
+    receives a signal the moment the child dies, and can immediately start running scripts
+	of your choice to fix the situation!  Now it's event driven.
+	(You do still need to run periodic tests to make sure the daemon is doing what it is
+	supposed to, but thats a separate topic)
+
+Ok, so what tools are available to do this?
+
+  * Original was "daemontools", by Dan Berstien, of Qmail fame.
+  * a popular successor is "runit"
+  * Others are "perp", "s6", or my own "daemonproxy"
+  * system-wide init replacements like upstart and systemd count, but are bloated by comparison,
+    and very "global".  systemd links against libdbus.  runit uses less ram than any process on
+	my whole system, and I can run any number of them.
+  
+  I'll show some quick examples with runit, since it is the most widely available.
+  (even available as part of Busybox)
+  
+  You create a directory for your service.
+  ((mkdir))
+  You create a file "my-daemon/run" which is a script that sets up and execs your service.
+  ((contents of my-daemon/run))
+  You create a file "my-daemon/log/run" which is a script that sets up and execs your logger.
+  Sissylog is a good option here, it reads standard in, writes to syslog and uses log levels
+  based on the prefix of the message.  So if it sees "error: message" it uses log level error.
+  (("error: blah"))
+  And then run "runsv my-daemon" to start it!  If the daemon exits, runsv restarts it.  If the
+  logger exits, runsv restarts it.  It re-uses the same pipe so log messages are never lost.
+  
+  Runit provides the tool "sv" to check and control the service.  It talks over the socket
+  "my-daemon/supervise/control", and lets you
+  
+    sv status my-daemon   # show status
+	sv up my-daemon       # start service
+	sv down my-daemon     # send SIGTERM, don't restart
+	sv 1 my-daemon        # send SIGUSR1
+
+  As you can see, a very simple interface.
+  
+No time to show all the varieties and options, but if this talk has you interested I would
+encourage you to read the manuals of these tools:
+
+  runit:        smarden.org/runit
+  perp:         b0llix.net/perp
+  s6:           skarnet.org/software/s6
+			    skarnet.org/software/s6/why.html   <-- read this
+  daemonproxy:  nrdvana.net/daemonproxy/   (or look on github)
+  
+  Using Log::Any?  see Log::Any::Adapter::Daemontools
+

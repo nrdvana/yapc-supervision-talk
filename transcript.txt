@@ -1,105 +1,133 @@
-This talk is about running perl scripts as daemons under Linux, or other unixes.
+9453
 
-I have found a better way to do it, and this talk is a ublic service announcement that
-THERE IS A BETTER WAY.  I did not invent this, I am merely the messenger bringing it to
-the masses.
+This talk is about running perl scripts as daemons
+under Linux, or other unixes.
 
-For anyone who isn't fully familiar with the problem, a quick recap:
+I have found a better way to do it, and this talk
+is a ublic service announcement that
+THERE IS A BETTER WAY.  I did not invent this, I
+am merely the messenger bringing it to the masses.
 
-  You want to run a perl script as a background service.
-   - If the service dies, you want to restart it.
-   - If the service stops working, you want to kill and restart it.
-   - You want to take all the status/error messages from the program and log them.  Maybe to syslog.
-  
-  You do a little research, and find out that the standard way to do it is
-   * Close STDIN, STDOUT, STDERR
-   * Write all logging to a file, or syslog.
-   * Fork and Call setsid() to become a session leader
-   * Write a PID file somewhere like /run/  This is a file with the name of your service containing
-     the process ID of your service.
+For anyone who isn't fully familiar with the problem,
+a quick recap:
 
-  But wait, if you're a session leader you happen to open a tty, you
-  get a controlling terminal!
-   * Solution: fork again and call setpgid
+You want to run a perl script as a background service.
+  - If the service dies, you want to restart it.
+  - If the service stops working, you want to kill
+    and restart it.
+  - You want to take all the status/error messages
+    from the program and log them.  Maybe to syslog.
+  
+You do a little research, and find out that the
+standard way to do it is
+  * Close STDIN, STDOUT, STDERR
+  * Write all logging to a file, or syslog.
+  * Fork and Call setsid() to become a session leader
+  * Write a PID file somewhere like /run/  This is a
+    file with the name of your service containing
+    the process ID of your service.
 
-  Oh, and what if we can't write to /run?  We should make the PID file configurable.
-  
-  And what syslog arguments should we use?  Make those configurable too...
-  
-  But wait, it's really hard to debug a program that daemonizes.
-  So, add an option to not daemonize.
+But wait, if you're a session leader you happen to
+open a tty, you get a controlling terminal!
+  * Solution: fork again and call setpgid
 
-  Ok, back to our goals:
+Oh, and what if we can't write to /run?  We should
+make the PID file configurable.
   
-  If it dies, we want to restart it.
+And what syslog arguments should we use?  Make those
+configurable too...
   
-  But how do we know?  Check from cron?  Every... Minute?  Ew!
-  
-  Also, PID files cause a race condition!  PIDs get recycled.  There are many
-  workarounds, but none really solve the problem.
-  
-  And to reliably start/stop the service... Kill based on PID?  using the
-  PID file to prevent multiple instances?
-  
-  Race conditions and more race conditions.
-  
-  Ok, Logging.  You wrote your script using syslog, but what about exceptions, and
-  you want to see warnings too, right?
+But wait, it's really hard to debug a program that
+daemonizes.  So, add an option to not daemonize.
 
-  And what about those pesky modules that print to STDERR?  Maybe instal something
-  to catch anything using STDERR or STDOUT.
+Ok, back to our goals:
   
-  What if you're killed by a signal?  Maybe you should trap them all so you can
-  log the reason your daemon exited.
-
-  But oh no, you called an XS method that died in a C library and all the
-  important diagnostics got flushed down /dev/null
-
-  also, you can't trap SIGKILL
+If it dies, we want to restart it.
+ 
+But how do we know?  Check from cron?  Every...
+Minute?  Ew!
   
-  What now?  Your logging is incomplete!
+Also, PID files cause a race condition!  PIDs get
+recycled.  There are many workarounds, but none
+really solve the problem.
+  
+And to reliably start/stop the service...
+Kill based on PID?
+using the PID file to prevent multiple instances?
+  
+Race conditions and more race conditions.
+  
+Ok, Logging.  You wrote your script using syslog,
+but what about exceptions, and you want to see
+warnings too, right?
+
+And what about those pesky modules that print to STDERR?
+Maybe instal something to catch anything using STDERR or STDOUT.
+  
+What if you're killed by a signal?
+Maybe you should trap them all so you can log
+the reason your daemon exited.
+
+But oh no, you called an XS method that died in
+a C library and all the important diagnostics got
+flushed down /dev/null
+
+also, you can't trap SIGKILL
+  
+What now?  Your logging is incomplete!
   
 So how do we fix this?
 
-  The real problem is that everything you did to "daemonize" your script is breaking the Unix
-  design.  No wonder it was so awkward!
+The real problem is that everything you did to
+"daemonize" your script is breaking the Unix
+design.  No wonder it was so awkward!
   
-  A parent spawns a child process.  The parent gets a PID to refer to the child.
-  There are NO race conditions because the child PID doesn't disappear until
-  the parent reaps it.
+A parent spawns a child process.
+The parent gets a PID to refer to the child.
+There are NO race conditions because the child PID
+doesn't disappear until the parent reaps it.
 
-  Every process gets Input, Output, and Diagnostic streams.  The output and diagnostics
-  of a daemon... are the things you want to log!  Redirect it to a logger!
+Every process gets Input, Output, and Diagnostic streams.
+The output and diagnostics of a daemon... are the
+things you want to log!  Redirect it to a logger!
 
-  Lets call the parent a "supervisor",
+Lets call the parent a "supervisor",
   
-  And the child is your service.
+And the child is your service.
   
-  Now, look what happens when the child crashes!
+Now, look what happens when the child crashes!
   
-  The error message, even one printed by a C library, makes it to the logger!
+The error message, even one printed by a C library,
+makes it to the logger!
   
-  The supervisor get a signal telling it the child died!
+The supervisor get a signal telling it the child died!
   
-  Also, the supervisor was holding a copy of the pipe that goes to the logger.
+Also, the supervisor was holding a copy of the pipe
+that goes to the logger.
   
-  So now the supervisor can start your cleanup script, connected to the same pipe,
-  so no race conditions in the logging.
+So now the supervisor can start your cleanup script,
+connected to the same pipe,
+so no race conditions in the logging.
   
-  And then your cleanup script can exec back to the daemon (or exit, and the supervisor
-  starts the daemon)
+And then your cleanup script can exec back to the daemon
+(or exit, and the supervisor starts the daemon)
 
-  Now!  Lets say you want to gracefully shut down the service, or send it custom signals.
+Now!  Lets say you want to gracefully shut down the 
+service, or send it custom signals.
   
-  The supervisor can listen on a unix socket at a known path.  And then you ask it
-  to send the signal for you.  No race conditions!  The supervisor knows the PID, and
-  either it is valid or the supervisor reaped it and knows not to send the signal.
+The supervisor can listen on a unix socket at a known path.
+And then you ask it to send the signal for you.
+No race conditions!
+The supervisor knows the PID, and either it is valid or
+the supervisor reaped it and knows not to send the signal.
   
 Ok, to recap:
   
   * Your daemon no longer needs to detach, fork or setsid
-  * Your daemon no longer needs to write a PID file, because the parent knows the PID.
-  * Your daemon no longer needs to use syslog, or provide options to configure it.
+  * Your daemon no longer needs to write a PID file,
+     because the parent knows the PID.
+  * Your daemon no longer needs to use syslog, or provide
+     options to configure it.
   * All errors logged, even SIGKILL
   * No more race conditions when managing the service.
   * No polling from cron!
@@ -109,49 +137,61 @@ Ok, so what tools are available to do this?
   * Original was "daemontools", by Dan Berstien, of Qmail fame.
   * a popular successor is "runit"
   * Others are "perp", "s6", or my own "daemonproxy"
-  * system-wide init replacements like upstart and systemd count, but are bloated by comparison,
-    and very "global".  upstart links against libdbus.  runit uses less ram than any process on
+  * system-wide init replacements like upstart and system
+    count, but are bloated by comparison, and very "global".
+	upstart links against libdbus.
+	runit uses less ram than any process on
 	my whole system, and I can run any number of them.
   
-  I'll show some quick examples with runit, since it is the most widely available.
+I'll show some quick examples with runit, since it is
+the most widely available.
   
-  Here's a quick view of the file tree,
+Here's a quick view of the file tree,
   
-  Here's the contents of the 'run' script for the service.  We set up a cache dir and then
-  exec into the service with STDERR also directed to the logger.
+Here's the contents of the 'run' script for the service.
+We set up a cache dir and then exec into the service
+with STDERR also directed to the logger.
   
-  Here's the contents of the 'finish' script for the service.  We remove the cache dir,
-  because our daemon is fragile and gets confused by its half-written cache files.
-  
-  Here's the contents of the 'log/run' script for the service.  It logs to syslog
-  as ID "my-service".
-  
-  Here's what you put in a runscript to start a service as user apache in a chroot with
-  special environment vars.
-  
-  Notice how each little program in that chain is doing somthing and then execing the
-  remaining arguments.  This is a great design and lets you quickly put together a
-  complicated configuration without having to alter the daemon.  Runit and perp come with
-  lots of these little utilities.
-  
-  Also note that the logger doesn't have to be in the chroot, and so you can have a chrooted
-  program logging to your main syslog!
+Here's the contents of the 'finish' script for the service.
+We remove the cache dir, because our daemon is fragile
+and gets confused by its half-written cache files.
 
-  Runit provides the tool "sv" to check and control the service.  It talks over the socket
-  "my-daemon/supervise/control".
-  Here's what you type to start the service.
+Here's the contents of the 'log/run' script for the
+service.  It logs to syslog as ID "my-service".
   
-  and stop it.
+Here's what you put in a runscript to start a service
+as user apache in a chroot with special environment vars.
   
-  and send it SIGUSR1.
+Notice how each little program in that chain is
+doing somthing and then execing the remaining arguments.
+This is a great design and lets you quickly put together
+a complicated configuration without having to alter the
+daemon.
+
+Runit and perp come with lots of these little utilities.
   
-  As you can see, a very simple interface.
+Also note that the logger doesn't have to be in the
+chroot, and so you can have a chrooted program logging
+to your main syslog!
+
+Runit provides the tool "sv" to check and control the service.
+It talks over the socket "my-daemon/supervise/control".
+Here's what you type to start the service.
   
-No time to show all the varieties and options, but if this talk has you interested I would
+and stop it.
+  
+and send it SIGUSR1.
+  
+As you can see, a very simple interface.
+  
+No time to show all the varieties and options,
+but if this talk has you interested I would
 encourage you to read the manuals of these tools:
 
-Also, the s6 guy has a lot of great rants about supervision and logging.  You should read them
+Also, the s6 guy has a lot of great rants about
+supervision and logging.  You should read them
 
-And if you are using Log::Any, which you should be, I have a small adapter that gives you
-daemontools-friendly logging, with prefixes like "error:".
+And if you are using Log::Any, which you should be,
+I have a small adapter that gives you daemontools-friendly
+logging, with prefixes like "error:".
 

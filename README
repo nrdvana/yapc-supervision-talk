@@ -15,45 +15,45 @@ about them on their individual sites.
 Handy Links:
 
 Process Supervision Tools
-	Daemontools
-	The pioneer of the design:
-	http://cr.yp.to/daemontools.html
-
-	Runit
-	A popular re-implementation of the same idea:
-	http://smarden.org/runit
-
-	Also available as a busybox applet:
-	http://busybox.org
-
-	Perp
-	A variation that uses a single process to supervise many jobs:
-	http://b0llix.net/perp/
-
-	s6
-	Extreme minimalist supervisor with high level of attention to detail.
-	http://skarnet.org/software/s6/
-	Also see discussion and comparison of tools at
-	http://skarnet.org/software/s6/why.html
-
-	Daemonproxy
-	Scriptable supervision tool that lets you easily build your own supervisor.
-	http://www.nrdvana.net/daemonproxy/
+  Daemontools
+    The pioneer of the design:
+    http://cr.yp.to/daemontools.html
+  
+  Runit
+    A popular re-implementation of the same idea:
+    http://smarden.org/runit
+  
+    Also available as a busybox applet:
+    http://busybox.org
+  
+  Perp
+    A variation that uses a single process to supervise many jobs:
+    http://b0llix.net/perp/
+  
+  s6
+    Extreme minimalist supervisor with high level of attention to detail.
+    http://skarnet.org/software/s6/
+    Also see discussion and comparison of tools at
+    http://skarnet.org/software/s6/why.html
+  
+  Daemonproxy
+    Scriptable supervision tool that lets you easily build your own supervisor.
+    http://www.nrdvana.net/daemonproxy/
 
 Useful Loggers
-
-Tinylog
-	Basic log-to-file with rotation built-in.
-	http://b0llix.net/perp/site.cgi?page=tinylog.8
-
-Sissylog
-	Log to syslog, using prefixes to determine log level
-	http://b0llix.net/perp/site.cgi?page=sissylog.8
-
-s6-log
-	Filter log messages into files by pattern, with many useful features.
-	http://skarnet.org/software/s6/s6-log.html
+  
+  Tinylog
+    Basic log-to-file with rotation built-in.
+    http://b0llix.net/perp/site.cgi?page=tinylog.8
+  
+  Sissylog
+    Log to syslog, using prefixes to determine log level
+    http://b0llix.net/perp/site.cgi?page=sissylog.8
+  
+  s6-log
+    Filter log messages into files by pattern, with many useful features.
+    http://skarnet.org/software/s6/s6-log.html
 
 Also, for anyone using Log::Any (which should be everyone)
-
+  
   https://metacpan.org/pod/Log::Any::Adapter::Daemontools

@@ -55,11 +55,10 @@ daemonizes.
 So, add an option to not daemonize.
 <>
 Ok, back to our goals:
-<>  
+  
 If it dies, we want to restart it.
 <>
 But how do we know?  Check from cron?  Every...
-<>
 Minute?
 <>
 Also, PID files cause a race condition!  PIDs get

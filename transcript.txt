@@ -65,8 +65,9 @@ recycled.
 There are many workarounds, but none
 really solve the problem.
 <>
-<>And to reliably start/stop the service...
-
+<>
+And to reliably start/stop the service...
+<>
 Kill based on PID?
 using the PID file to prevent multiple instances?
 <>

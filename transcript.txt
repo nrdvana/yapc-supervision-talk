@@ -1,10 +1,10 @@
 9453
 
-This talk is about running perl scripts as daemons
-under Linux, or other unixes.
+This talk is about running perl scripts as services
+or, "daemons" under Unux.
 
-I am here with the message that THERE IS A BETTER WAY.
-This talk is a public service announcement.
+I am here with the public service announcement that
+THERE IS A BETTER WAY.
 
 For anyone who isn't fully familiar with the problem,
 here's a quick recap:

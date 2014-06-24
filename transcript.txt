@@ -4,14 +4,12 @@ This talk is about running perl scripts as daemons
 under Linux, or other unixes.
 
 I am here with the message that THERE IS A BETTER WAY.
-This talk is a public service announcement to bring the
-message to the masses.
+This talk is a public service announcement.
 
 For anyone who isn't fully familiar with the problem,
 here's a quick recap:
-
-You want to run a perl script as a background service.
 <>
+You want to run a perl script as a background service.
   - If the service dies, you want to restart it.
 <>
   - You want to be able to start and stop the service.

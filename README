@@ -1,0 +1,21 @@
+Simplifying Perl Daemons
+using Supervisors
+
+
+This talk discusses the de-facto standard for "daemonizing" a process
+in Unix, and why the de-facto standard is WRONG.
+
+It shows how much work is involved in doing this, and then shows
+how you can avoid all that work by using a supervisor.
+
+It then lists some good supervisor tools, and suggestes reading
+about them on their individual sites.
+
+Runit:        smarden.org/runit
+Perp:         b0llix.net/perp
+S6:           skarnet.org/software/s6
+              skarnet.org/software/s6/why.html
+Daemonproxy:  nrdvana.net/daemonproxy
+
+Using Log::Any?
+              Log::Any::Adapter::Daemontools

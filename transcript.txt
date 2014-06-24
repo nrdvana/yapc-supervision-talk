@@ -190,55 +190,28 @@ Ok, so what tools are available to do this?
 	upstart links against tons of libraries, including libdbus.
 	where runit is static and uses less ram than any process on
 	my whole system, and I can run any number of them.
-<>
-I'll show a quick examples with runit, since it's
-the most widely available.
-<>
-Here's the contents of a 'run' script for starting a
-service.
-(set up a cache dir and then exec into the service
-with STDERR directed to STDOUT.)
-<>
-Here's the contents of the 'finish' script for the service.
-(do stuff like remove the cache dir)
-<>
-Here's the contents of the 'log/run' script for the
-service.  It uses the sissylog tool to copy stdin to syslog.
-
-Then you start runsv on that directory and it will do the
-design I showed in the previous diagram.
-<>
-Now, here's what you put in a runscript to start a
-service as user apache in a chroot with special
-environment vars.
-  
-Notice how each little program in that chain is
-doing somthing and then execing the remaining arguments.
-This is a great design and lets you quickly put together
-a complicated configuration without having to alter the
-daemon.
-
-Runit and perp come with lots of these little utilities.
-  
-Also note that the logger doesn't have to be in the
-chroot, and so you can have a chrooted program logging
-to your main syslog!
-<>
-Runit provides the tool "sv" to check and control the service.
-It talks over the socket "my-daemon/supervise/control".
-Here's what you type to start the service.
-<>
-and stop it.
-<>
-or send it SIGUSR1.
-
-As you can see, a very simple interface.
 
 No time to show all the varieties and options,
 but if this talk has you interested
 <>
 I would encourage you to read the manuals of
 these tools:
+
+I was going to show an example of how to use runit, but
+that added about 2 minutes to my talk, so you'll have to
+explore on your own.  I will just say that runit and perp
+and s6 all have learning curves that can take you entire
+minutes to learn.
+
+Now, why am I advertising 4 tools? because supervision is
+a really simple thing to implement, and so each person
+likes to do it their own way.  Bike-shedding and etc.
+
+runit, perp, and s6 are all nice tools with decent testing.
+
+If however, you decide to write your own, I suggest
+you extend daemonproxy with a perl script.  Read the docs
+and I think you'll agree.
 
 Also, the s6 guy has a lot of great rants about
 supervision and logging.  You should read them.
@@ -247,3 +220,4 @@ And if you are using Log::Any, which you should be,
 I have a small adapter that gives you daemontools-friendly
 logging, with prefixes like "error:".
 
+Also, these links are listed in the POD for that module.

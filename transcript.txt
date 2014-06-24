@@ -194,20 +194,22 @@ Ok, so what tools are available to do this?
 No time to show all the varieties and options,
 but if this talk has you interested
 <>
-I would encourage you to read the manuals of
-these tools:
+I would encourage you to read these links:
 
 I was going to show an example of how to use runit, but
-that added about 2 minutes to my talk, so you'll have to
-explore on your own.  I will just say that runit and perp
+I'm out of time, so you'll have to explore on your own.
+
+I will just say that runit and perp
 and s6 all have learning curves that can take you entire
 minutes to learn.
 
 Now, why am I advertising 4 tools? because supervision is
 a really simple thing to implement, and so each person
-likes to do it their own way.  Bike-shedding and etc.
+likes to tweak it their own way.  Bike-shedding and etc, but
+it lets you pick your favorite implementation.
 
-runit, perp, and s6 are all nice tools with decent testing.
+runit, perp, and s6 are all nice tools with good
+real-world testing.
 
 If however, you decide to write your own, I suggest
 you extend daemonproxy with a perl script.  Read the docs
@@ -218,6 +220,10 @@ supervision and logging.  You should read them.
 
 And if you are using Log::Any, which you should be,
 I have a small adapter that gives you daemontools-friendly
-logging, with prefixes like "error:".
+logging.
 
 Also, these links are listed in the POD for that module.
+
+<>
+And, if you find this info useful,
+please spread the word!

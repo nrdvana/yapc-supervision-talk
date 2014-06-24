@@ -124,22 +124,23 @@ Lets call the parent a
 <>
 "supervisor",
 
-And the child is your
+And the child is your service.
 <>
-service.
 
-Now, look what happens when
+And you have, ta-da, Process Supervision.
+
+Now, look what happens
 <>
-the child crashes!
+when the child crashes!
 <>
 The error message, even one printed by a C library,
 makes it to the logger!
 
-The supervisor gets a signal telling it the child died!
+and the supervisor gets a signal telling it the child died!
 
-Also, say the supervisor
+Also, say the supervisor was
 <>
-was holding a copy of the pipe that goes to the logger.
+holding a copy of the pipe that goes to the logger.
 
 So now the supervisor
 <>

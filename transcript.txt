@@ -181,34 +181,33 @@ Ok, so what tools are available to do this?
 
   * Original was "daemontools", by Dan Berstien, of Qmail fame.
 <>
-  * the popular successor "runit"
+  * then there's the popular successor "runit"
 <>
-  * "perp", "s6", and a few others.  And, my own "daemonproxy"
+  * and we have "perp", "s6", and my own invention,"daemonproxy"
 <>
-  * system-wide init replacements like upstart and system
-    count, but are bloated by comparison, and very "global".
-	upstart links against libdbus.
-	runit uses less ram than any process on
+  * there's also the system-wide init replacements like
+    upstart and systemd, but they're bloated by comparison,
+	and very "global".
+	upstart links against tons of libraries, including libdbus.
+	where runit is static and uses less ram than any process on
 	my whole system, and I can run any number of them.
 <>
 I'll show a quick examples with runit, since it's
 the most widely available.
-  
-Here's a quick view of the file tree,
 <>
-Here's the contents of the 'run' script for the service.
-We set up a cache dir and then exec into the service
-with STDERR directed to STDOUT.
+Here's the contents of a 'run' script for starting a
+service.
+(set up a cache dir and then exec into the service
+with STDERR directed to STDOUT.)
 <>
 Here's the contents of the 'finish' script for the service.
-We remove the cache dir, because our daemon is fragile
-and gets confused by its half-written cache files.
+(do stuff like remove the cache dir)
 <>
 Here's the contents of the 'log/run' script for the
-service.  It logs to syslog as ID "my-service".
+service.  It uses the sissylog tool to copy stdin to syslog.
 
-Start runsv on that directory and it will do the design
-I showed in the previous diagram.
+Then you start runsv on that directory and it will do the
+design I showed in the previous diagram.
 <>
 Now, here's what you put in a runscript to start a
 service as user apache in a chroot with special
@@ -243,7 +242,7 @@ I would encourage you to read the manuals of
 these tools:
 
 Also, the s6 guy has a lot of great rants about
-supervision and logging.  You should read them
+supervision and logging.  You should read them.
 
 And if you are using Log::Any, which you should be,
 I have a small adapter that gives you daemontools-friendly

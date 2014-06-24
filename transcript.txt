@@ -20,17 +20,17 @@ You want to run a perl script as a background service.
 You do a little research, and find out that the
 standard way to do it is
 <>
-  * Redirect STDIN, STDOUT, STDERR to /dev/null
+  * Redirect I/O to /dev/null
 <>
-  * Write all logging to a file, or syslog
+  * Write all logging to a file or syslog
     (and converting everything to syslog is a pain)
 <>
   * Fork and Call setsid() to become a session leader
 <>
   * Write a PID file somewhere like /run/ so you know
     what process ID is officially your service.
-	You might also use it as a lockfile to make sure
-	only one copy is running.
+	(You might also use it as a lockfile to make sure
+	only one copy is running.)
 <>
 But wait
 <>

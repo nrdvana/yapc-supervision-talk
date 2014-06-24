@@ -157,8 +157,8 @@ The supervisor can listen on a unix socket at a known path.
 And then you ask *it* to send the signal for you.
 No race conditions!
 <>
-The supervisor knows the PID, and either it is valid or
-the supervisor reaped it and knows not to send the signal.
+The supervisor knows the PID, or if it reaped the daemon
+it knows not to send the signal.
 
 Also, it can
 <>
